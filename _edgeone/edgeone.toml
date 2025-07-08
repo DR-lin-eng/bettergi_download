@@ -1,17 +1,76 @@
-name = "bettergi-download"
-compatibility_date = "2024-01-01"
-
-[build]
-command = ""
-destination = "."
-
-[env.production.vars]
-ENVIRONMENT = "production"
-GITHUB_REPO = "babalae/better-genshin-impact"
-
-[env.production.kv_namespaces]
-CACHE_KV = { binding = "CACHE_KV", id = "your-kv-namespace-id" }
-
-[[env.production.routes]]
-pattern = "yourdomain.com/*"
-zone_name = "yourdomain.com"
+{
+  "name": "bettergi-proxy-downloader",
+  "version": "1.0.0",
+  "description": "BetterGI GitHub Release简化代理下载服务 - 无缓存版本",
+  "main": "functions/api/[[route]].js",
+  "scripts": {
+    "dev": "echo 'EdgeOne本地开发'",
+    "deploy": "echo '请使用EdgeOne Pages控制台部署'",
+    "test": "npm run test:api",
+    "test:api": "echo '测试API接口'",
+    "validate": "node scripts/validate.js"
+  },
+  "keywords": [
+    "bettergi",
+    "github",
+    "downloader",
+    "proxy",
+    "edgeone",
+    "cdn",
+    "no-cache",
+    "streaming"
+  ],
+  "author": "DR-lin-eng",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DR-lin-eng/bettergi_download.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DR-lin-eng/bettergi_download/issues"
+  },
+  "homepage": "https://github.com/DR-lin-eng/bettergi_download#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "edgeone": {
+    "compatibility_date": "2024-01-01",
+    "name": "bettergi-proxy-downloader",
+    "build": {
+      "command": "",
+      "destination": "."
+    },
+    "vars": {
+      "ENVIRONMENT": "production",
+      "GITHUB_REPO": "babalae/better-genshin-impact"
+    },
+    "routes": [
+      {
+        "pattern": "yourdomain.com/*",
+        "zone_name": "yourdomain.com"
+      }
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "files": [
+    "index.html",
+    "functions/",
+    "_edgeone/",
+    "README.md"
+  ],
+  "config": {
+    "features": {
+      "cache": false,
+      "proxy_download": true,
+      "direct_download": false,
+      "streaming": true
+    },
+    "limits": {
+      "max_file_size": "5GB",
+      "timeout": "5min",
+      "github_api_timeout": "30s"
+    }
+  }
+}
