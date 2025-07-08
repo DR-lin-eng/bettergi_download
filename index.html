@@ -72,7 +72,7 @@
             flex: 1;
         }
 
-        .cache-status-notice {
+        .proxy-notice {
             background: linear-gradient(45deg, #e3f2fd, #f3e5f5);
             border: 1px solid #bbdefb;
             border-radius: 12px;
@@ -83,107 +83,21 @@
             gap: 15px;
         }
 
-        .cache-status-notice .notice-icon {
-            font-size: 1.5em;
+        .proxy-notice .notice-icon {
+            font-size: 1.8em;
             min-width: 40px;
         }
 
-        .cache-status-notice .notice-content h4 {
+        .proxy-notice .notice-content h4 {
             color: #1976d2;
             margin-bottom: 5px;
             font-size: 1.1em;
         }
 
-        .cache-status-notice .notice-content p {
+        .proxy-notice .notice-content p {
             color: #424242;
             margin: 0;
             font-size: 0.95em;
-        }
-
-        .predownload-notice {
-            background: linear-gradient(45deg, #fff3e0, #e8f5e8);
-            border: 1px solid #ffcc02;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .predownload-notice .notice-icon {
-            font-size: 1.8em;
-            min-width: 40px;
-        }
-
-        .predownload-notice .notice-content h4 {
-            color: #f57c00;
-            margin-bottom: 5px;
-            font-size: 1.1em;
-        }
-
-        .predownload-notice .notice-content p {
-            color: #424242;
-            margin: 0;
-            font-size: 0.95em;
-        }
-
-        .mode-selector {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 30px;
-        }
-
-        .mode-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .mode-btn {
-            flex: 1;
-            padding: 12px 20px;
-            border: 2px solid #dee2e6;
-            background: white;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        .mode-btn.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-
-        .mode-btn:hover:not(.active) {
-            border-color: #667eea;
-            color: #667eea;
-        }
-
-        .download-mode-info {
-            display: none;
-            background: white;
-            border-radius: 8px;
-            padding: 15px;
-            border-left: 4px solid #667eea;
-        }
-
-        .download-mode-info.active {
-            display: block;
-        }
-
-        .download-mode-info ul {
-            margin: 10px 0 0 20px;
-            color: #666;
-        }
-
-        .download-mode-info li {
-            margin-bottom: 5px;
-            font-size: 0.9em;
         }
 
         .downloads-section h2 {
@@ -246,16 +160,19 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
-            font-size: 0.9em;
+            font-size: 1em;
             transition: all 0.3s ease;
             border: none;
             cursor: pointer;
             position: relative;
             overflow: hidden;
+            flex: 1;
+            justify-content: center;
+            min-width: 200px;
         }
 
         .download-btn::before {
@@ -281,44 +198,11 @@
         .btn-proxy:hover {
             background: linear-gradient(45deg, #5a6fd8, #6a4190);
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
 
-        .btn-direct {
-            background: linear-gradient(45deg, #28a745, #20c997);
-            color: white;
-        }
-
-        .btn-direct:hover {
-            background: linear-gradient(45deg, #218838, #1abc9c);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
-        }
-
-        .btn-github {
-            background: linear-gradient(45deg, #f39c12, #e67e22);
-            color: white;
-        }
-
-        .btn-github:hover {
-            background: linear-gradient(45deg, #e67e22, #d35400);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4);
-        }
-
-        .cache-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 0.8em;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-        }
-
-        .cache-indicator.cached {
-            background: #d4edda;
-            color: #155724;
+        .btn-proxy:active {
+            transform: translateY(0);
         }
 
         .release-notes {
@@ -385,11 +269,41 @@
             margin: 20px 0;
         }
 
+        .downloading {
+            opacity: 0.7;
+            pointer-events: none;
+            position: relative;
+        }
+
+        .downloading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         /* 响应式设计 */
         @media (max-width: 768px) {
             .container {
                 margin: 10px;
                 padding: 0;
+            }
+            
+            .header {
+                padding: 20px;
             }
             
             .header h1 {
@@ -400,42 +314,24 @@
                 font-size: 0.9em;
             }
             
-            .download-buttons {
-                flex-direction: column;
-                gap: 8px;
+            .main-content {
+                padding: 20px;
             }
             
             .download-btn {
                 font-size: 0.9em;
-                padding: 8px 15px;
+                padding: 10px 20px;
+                min-width: auto;
             }
             
-            .mode-buttons {
-                flex-direction: column;
-            }
-            
-            .cache-status-notice {
+            .proxy-notice {
                 flex-direction: column;
                 text-align: center;
                 gap: 10px;
             }
             
-            .cache-status-notice .notice-icon {
-                font-size: 1.2em;
-            }
-            
-            .predownload-notice {
-                flex-direction: column;
-                text-align: center;
-                gap: 10px;
-            }
-            
-            .notice-icon {
+            .proxy-notice .notice-icon {
                 font-size: 1.5em;
-            }
-            
-            .header h1 {
-                font-size: 2em;
             }
         }
     </style>
@@ -443,45 +339,17 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎮 BetterGI下载页</h1>
-            <p>Better Genshin Impact - 快速、稳定的下载体验</p>
+            <h1>🎮 BetterGI代理下载</h1>
+            <p>Better Genshin Impact - 快速、稳定的代理下载服务</p>
             <div id="version-info"></div>
         </div>
 
         <div class="main-content">
-            <div id="cache-info"></div>
-            <div id="predownload-info"></div>
-
-            <div class="mode-selector">
-                <div class="mode-buttons">
-                    <button class="mode-btn active" onclick="switchMode('proxy')" id="proxy-btn">
-                        🔄 代理下载模式
-                    </button>
-                    <button class="mode-btn" onclick="switchMode('direct')" id="direct-btn">
-                        ⚡ 直连下载模式
-                    </button>
-                </div>
-                
-                <div id="mode-info-proxy" class="download-mode-info active">
-                    <strong>🔄 代理下载模式：</strong>
-                    <ul>
-                        <li>文件通过EdgeOne边缘节点中转，稳定可靠</li>
-                        <li>支持全球CDN加速分发</li>
-                        <li>自动缓存1GB内文件，后续下载极速响应</li>
-                        <li>支持断点续传，大文件下载更稳定</li>
-                        <li>推荐GitHub直连速度慢的用户使用</li>
-                    </ul>
-                </div>
-                
-                <div id="mode-info-direct" class="download-mode-info">
-                    <strong>⚡ 直连下载模式：</strong>
-                    <ul>
-                        <li>文件直接从GitHub CDN下载</li>
-                        <li>无需经过第三方服务器</li>
-                        <li>适合网络环境良好的用户</li>
-                        <li>GitHub官方CDN分发</li>
-                        <li>下载速度取决于本地网络环境</li>
-                    </ul>
+            <div class="proxy-notice">
+                <div class="notice-icon">🔄</div>
+                <div class="notice-content">
+                    <h4>代理下载服务</h4>
+                    <p>通过EdgeOne全球CDN节点代理下载，解决GitHub访问慢的问题，提供稳定快速的下载体验。</p>
                 </div>
             </div>
 
@@ -499,38 +367,17 @@
                     </a> |
                     <a href="https://github.com/babalae/better-genshin-impact/releases" target="_blank">
                         查看所有版本
-                    </a> |
-                    <a href="javascript:void(0)" onclick="refreshCache()" style="color: #007bff;">
-                        🔄 刷新缓存
                     </a>
                 </p>
-                
-                <details style="margin-top: 15px;">
-                    <summary style="cursor: pointer; color: #6c757d; font-size: 0.9em;">🔧 调试工具</summary>
-                    <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 0.85em;">
-                        <a href="javascript:void(0)" onclick="debugCache()" style="color: #6c757d; text-decoration: none; margin-right: 15px;">
-                            🔍 缓存调试
-                        </a>
-                        <a href="javascript:void(0)" onclick="testAccess()" style="color: #6c757d; text-decoration: none; margin-right: 15px;">
-                            🌐 访问测试
-                        </a>
-                        <a href="javascript:void(0)" onclick="testDownload()" style="color: #6c757d; text-decoration: none;">
-                            🧪 下载测试
-                        </a>
-                    </div>
-                </details>
             </div>
         </div>
     </div>
 
     <script>
-        let currentMode = 'proxy';
         let releaseData = null;
-        let cacheInfo = null;
 
         // API配置
-        const API_BASE = '/api';  // EdgeOne Functions路径
-        const CACHE_EXPIRE = 3600; // 1小时缓存
+        const API_BASE = '/api';
 
         // 初始化页面
         async function initPage() {
@@ -539,7 +386,7 @@
                 renderPage();
             } catch (error) {
                 console.error('Failed to load release data:', error);
-                showError('无法加载发布信息，请稍后重试。');
+                showError('无法加载发布信息，GitHub API可能暂时不可用，请稍后重试。');
             }
         }
 
@@ -550,15 +397,12 @@
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             const data = await response.json();
-            releaseData = data.release;
-            cacheInfo = data.cache_info;
+            releaseData = data;
         }
 
         // 渲染页面
         function renderPage() {
             renderVersionInfo();
-            renderCacheInfo();
-            renderPredownloadInfo();
             renderDownloads();
         }
 
@@ -567,61 +411,14 @@
             const versionDiv = document.getElementById('version-info');
             if (releaseData && releaseData.tag_name) {
                 const releaseDate = releaseData.published_at ? 
-                    new Date(releaseData.published_at).toLocaleDateString('zh-CN') : '未知日期';
+                    new Date(releaseData.published_at).toLocaleDateString('zh-CN', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    }) : '未知日期';
                 versionDiv.innerHTML = `
                     <div class="version-badge">
                         最新版本: ${releaseData.tag_name} (${releaseDate})
-                    </div>
-                `;
-            }
-        }
-
-        // 渲染缓存信息
-        function renderCacheInfo() {
-            const cacheDiv = document.getElementById('cache-info');
-            if (cacheInfo && cacheInfo.exists) {
-                const remaining = Math.floor(cacheInfo.remaining / 60);
-                cacheDiv.innerHTML = `
-                    <div class="cache-status-notice">
-                        <div class="notice-icon">ℹ️</div>
-                        <div class="notice-content">
-                            <h4>API缓存状态</h4>
-                            <p>GitHub API数据已缓存，剩余有效时间: ${remaining}分钟 (避免频繁API调用限制)</p>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        // 渲染预下载信息
-        function renderPredownloadInfo() {
-            const predownloadDiv = document.getElementById('predownload-info');
-            if (!releaseData || !releaseData.assets) return;
-
-            // 计算可缓存文件信息
-            const singleFileLimit = 1024 * 1024 * 1024; // 1GB
-            let cacheableCount = 0;
-            let totalSize = 0;
-
-            releaseData.assets.forEach(asset => {
-                if (asset.size > 0 && asset.size <= singleFileLimit) {
-                    cacheableCount++;
-                    totalSize += asset.size;
-                }
-            });
-
-            if (cacheableCount > 0) {
-                const totalSizeMB = (totalSize / 1024 / 1024).toFixed(1);
-                predownloadDiv.innerHTML = `
-                    <div class="predownload-notice">
-                        <div class="notice-icon">🚀</div>
-                        <div class="notice-content">
-                            <h4>智能缓存系统</h4>
-                            <p>
-                                系统管理 ${cacheableCount} 个可缓存文件（共 ${totalSizeMB} MB），
-                                首次访问可能需要等待，后续下载将享受极速体验！
-                            </p>
-                        </div>
                     </div>
                 `;
             }
@@ -654,25 +451,19 @@
                             <div class="file-details">
                                 <div class="file-name">
                                     📄 ${asset.name}
-                                    <span style="color: #ffc107; font-size: 0.8em;">🔄 可缓存</span>
                                 </div>
                                 <div class="file-meta">
-                                    <span>大小: ${sizeMB} MB</span>
-                                    <span>下载次数: ${asset.download_count?.toLocaleString() || 0}</span>
-                                    <span>更新时间: ${updateTime}</span>
+                                    <span>📊 大小: ${sizeMB} MB</span>
+                                    <span>📈 下载: ${asset.download_count?.toLocaleString() || 0} 次</span>
+                                    <span>🕒 更新: ${updateTime}</span>
                                 </div>
                             </div>
                             <div class="download-buttons">
                                 <a href="${proxyUrl}" 
-                                   class="download-btn btn-proxy proxy-download"
+                                   class="download-btn btn-proxy"
+                                   onclick="handleDownload(this, event)"
                                    title="通过EdgeOne代理服务器下载">
-                                    🔄 代理下载
-                                </a>
-                                <a href="${asset.browser_download_url}" 
-                                   class="download-btn btn-github direct-download"
-                                   target="_blank"
-                                   title="直接从GitHub下载">
-                                    ⚡ 直连下载
+                                    🚀 开始下载
                                 </a>
                             </div>
                         </div>
@@ -693,9 +484,6 @@
             }
 
             contentArea.innerHTML = downloadsHtml;
-
-            // 添加下载按钮事件监听
-            addDownloadListeners();
         }
 
         // 简单的Markdown解析
@@ -719,55 +507,18 @@
                 .replace(/<p><\/p>/g, '');
         }
 
-        // 切换下载模式
-        function switchMode(mode) {
-            if (currentMode === mode) return;
+        // 处理下载点击
+        function handleDownload(button, event) {
+            // 添加下载中状态
+            button.classList.add('downloading');
+            const originalText = button.innerHTML;
+            button.innerHTML = '⏳ 正在下载...';
             
-            document.querySelectorAll('.mode-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.getElementById(mode + '-btn').classList.add('active');
-            
-            document.querySelectorAll('.download-mode-info').forEach(info => {
-                info.classList.remove('active');
-            });
-            document.getElementById('mode-info-' + mode).classList.add('active');
-            
-            if (mode === 'proxy') {
-                document.querySelectorAll('.proxy-download').forEach(btn => {
-                    btn.style.display = 'inline-flex';
-                });
-                document.querySelectorAll('.direct-download').forEach(btn => {
-                    btn.style.display = 'none';
-                });
-            } else {
-                document.querySelectorAll('.proxy-download').forEach(btn => {
-                    btn.style.display = 'none';
-                });
-                document.querySelectorAll('.direct-download').forEach(btn => {
-                    btn.style.display = 'inline-flex';
-                });
-            }
-            
-            currentMode = mode;
-        }
-
-        // 添加下载按钮监听
-        function addDownloadListeners() {
-            document.querySelectorAll('.proxy-download').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    const originalText = this.innerHTML;
-                    this.innerHTML = '🔄 正在代理下载...';
-                    this.style.opacity = '0.7';
-                    this.style.pointerEvents = 'none';
-                    
-                    setTimeout(() => {
-                        this.innerHTML = originalText;
-                        this.style.opacity = '1';
-                        this.style.pointerEvents = 'auto';
-                    }, 30000);
-                });
-            });
+            // 设置超时恢复按钮状态
+            setTimeout(() => {
+                button.classList.remove('downloading');
+                button.innerHTML = originalText;
+            }, 30000); // 30秒后恢复
         }
 
         // 显示错误信息
@@ -777,56 +528,18 @@
                 <div class="error">
                     <h3>⚠️ 错误</h3>
                     <p>${message}</p>
+                    <p style="margin-top: 10px;">
+                        <a href="javascript:void(0)" onclick="location.reload()" style="color: #721c24; text-decoration: underline;">
+                            🔄 点击重试
+                        </a>
+                    </p>
                 </div>
             `;
-        }
-
-        // 刷新缓存
-        async function refreshCache() {
-            try {
-                await fetch(`${API_BASE}/refresh`, { method: 'POST' });
-                location.reload();
-            } catch (error) {
-                alert('刷新缓存失败: ' + error.message);
-            }
-        }
-
-        // 调试功能
-        async function debugCache() {
-            try {
-                const response = await fetch(`${API_BASE}/debug/cache`);
-                const data = await response.json();
-                console.log('Cache Debug:', data);
-                alert('调试信息已输出到控制台');
-            } catch (error) {
-                alert('调试失败: ' + error.message);
-            }
-        }
-
-        async function testAccess() {
-            try {
-                const response = await fetch(`${API_BASE}/test/access`);
-                const data = await response.json();
-                console.log('Access Test:', data);
-                alert('测试完成，结果已输出到控制台');
-            } catch (error) {
-                alert('测试失败: ' + error.message);
-            }
-        }
-
-        async function testDownload() {
-            if (releaseData && releaseData.assets && releaseData.assets.length > 0) {
-                const testUrl = `${API_BASE}/test/download?d=0&v=${encodeURIComponent(releaseData.tag_name)}`;
-                window.open(testUrl, '_blank');
-            } else {
-                alert('没有可测试的文件');
-            }
         }
 
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
             initPage();
-            switchMode('proxy');
         });
     </script>
 </body>
