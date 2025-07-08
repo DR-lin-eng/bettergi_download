@@ -1,499 +1,833 @@
-// EdgeOne Pages Functions - API处理
-// 文件路径: functions/api/[[route]].js
-
-// 配置常量
-const CONFIG = {
-    GITHUB_API_URL: 'https://api.github.com/repos/babalae/better-genshin-impact/releases/latest',
-    CACHE_EXPIRE: 3600, // 1小时
-    SINGLE_FILE_LIMIT: 1024 * 1024 * 1024, // 1GB
-    MAX_CACHE_SIZE: 10 * 1024 * 1024 * 1024, // 10GB
-    USER_AGENT: 'EdgeOne-GitHub-Release-Downloader'
-};
-
-// 主要处理函数
-export async function onRequest(context) {
-    const { request, env } = context;
-    const url = new URL(request.url);
-    const path = url.pathname.replace('/api', '');
-    
-    // 设置CORS头
-    const corsHeaders = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-    };
-
-    // 处理OPTIONS请求
-    if (request.method === 'OPTIONS') {
-        return new Response(null, { headers: corsHeaders });
-    }
-
-    try {
-        let response;
-        
-        // 路由处理
-        switch (true) {
-            case path === '/release':
-                response = await handleRelease(context);
-                break;
-            case path.startsWith('/download'):
-                response = await handleDownload(context);
-                break;
-            case path === '/refresh':
-                response = await handleRefresh(context);
-                break;
-            case path === '/debug/cache':
-                response = await handleDebugCache(context);
-                break;
-            case path === '/test/access':
-                response = await handleTestAccess(context);
-                break;
-            case path === '/test/download':
-                response = await handleTestDownload(context);
-                break;
-            default:
-                response = new Response('Not Found', { status: 404 });
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BetterGI代理下载页 - BetterGI 快速下载</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        // 添加CORS头到响应
-        Object.entries(corsHeaders).forEach(([key, value]) => {
-            response.headers.set(key, value);
-        });
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
 
-        return response;
-    } catch (error) {
-        console.error('API Error:', error);
-        return new Response(JSON.stringify({
-            error: error.message,
-            timestamp: new Date().toISOString()
-        }), {
-            status: 500,
-            headers: {
-                'Content-Type': 'application/json',
-                ...corsHeaders
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            flex: 1;
+        }
+
+        .cache-status-notice {
+            background: linear-gradient(45deg, #e3f2fd, #f3e5f5);
+            border: 1px solid #bbdefb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .cache-status-notice .notice-icon {
+            font-size: 1.5em;
+            min-width: 40px;
+        }
+
+        .cache-status-notice .notice-content h4 {
+            color: #1976d2;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .cache-status-notice .notice-content p {
+            color: #424242;
+            margin: 0;
+            font-size: 0.95em;
+        }
+
+        .predownload-notice {
+            background: linear-gradient(45deg, #fff3e0, #e8f5e8);
+            border: 1px solid #ffcc02;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .predownload-notice .notice-icon {
+            font-size: 1.8em;
+            min-width: 40px;
+        }
+
+        .predownload-notice .notice-content h4 {
+            color: #f57c00;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .predownload-notice .notice-content p {
+            color: #424242;
+            margin: 0;
+            font-size: 0.95em;
+        }
+
+        .mode-selector {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #dee2e6;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .mode-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .mode-btn:hover:not(.active) {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .download-mode-info {
+            display: none;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .download-mode-info.active {
+            display: block;
+        }
+
+        .download-mode-info ul {
+            margin: 10px 0 0 20px;
+            color: #666;
+        }
+
+        .download-mode-info li {
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .downloads-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #ecf0f1;
+        }
+
+        .download-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .download-item:hover {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .download-info {
+            padding: 20px;
+        }
+
+        .file-details {
+            margin-bottom: 15px;
+        }
+
+        .file-name {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .file-meta {
+            color: #6c757d;
+            font-size: 0.9em;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .download-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .download-btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-proxy {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-proxy:hover {
+            background: linear-gradient(45deg, #5a6fd8, #6a4190);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-direct {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-direct:hover {
+            background: linear-gradient(45deg, #218838, #1abc9c);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-github {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .btn-github:hover {
+            background: linear-gradient(45deg, #e67e22, #d35400);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.4);
+        }
+
+        .cache-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8em;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .cache-indicator.cached {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .release-notes {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .release-notes h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .release-notes h4 {
+            color: #6c757d;
+            margin: 15px 0 10px 0;
+            font-size: 1.1em;
+        }
+
+        .release-notes p {
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+
+        .release-notes ul {
+            color: #6c757d;
+            margin-left: 20px;
+        }
+
+        .release-notes li {
+            margin-bottom: 5px;
+        }
+
+        .github-link {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .github-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .github-link a:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 0;
             }
-        });
-    }
-}
-
-// 处理GitHub发布信息请求
-async function handleRelease(context) {
-    const { env } = context;
-    const cache = new CacheManager(env);
-    
-    // 尝试从缓存获取
-    const cached = await cache.getApiCache();
-    if (cached && cached.data && cached.timestamp + CONFIG.CACHE_EXPIRE > Date.now() / 1000) {
-        return new Response(JSON.stringify({
-            release: cached.data,
-            cache_info: {
-                exists: true,
-                age: Math.floor(Date.now() / 1000 - cached.timestamp),
-                remaining: CONFIG.CACHE_EXPIRE - Math.floor(Date.now() / 1000 - cached.timestamp),
-                expired: false
-            }
-        }), {
-            headers: { 'Content-Type': 'application/json' }
-        });
-    }
-
-    // 从GitHub API获取最新数据
-    const releaseData = await fetchFromGitHub(CONFIG.GITHUB_API_URL);
-    if (!releaseData) {
-        throw new Error('Failed to fetch release data from GitHub');
-    }
-
-    // 保存到缓存
-    await cache.setApiCache(releaseData);
-
-    // 后台预缓存文件（异步执行，不阻塞响应）
-    if (releaseData.assets && Array.isArray(releaseData.assets)) {
-        // 使用context.waitUntil在后台执行预缓存（如果EdgeOne支持）
-        if (context.waitUntil) {
-            context.waitUntil(predownloadAssets(releaseData.assets, releaseData.tag_name, env));
-        }
-    }
-
-    return new Response(JSON.stringify({
-        release: releaseData,
-        cache_info: {
-            exists: false
-        }
-    }), {
-        headers: { 'Content-Type': 'application/json' }
-    });
-}
-
-// 处理代理下载请求
-async function handleDownload(context) {
-    const { request, env } = context;
-    const url = new URL(request.url);
-    const downloadId = url.searchParams.get('d');
-    const version = url.searchParams.get('v');
-
-    if (!downloadId || !version) {
-        return new Response('Missing parameters', { status: 400 });
-    }
-
-    // 获取发布数据
-    const cache = new CacheManager(env);
-    const apiCache = await cache.getApiCache();
-    
-    let releaseData;
-    if (apiCache && apiCache.data && apiCache.timestamp + CONFIG.CACHE_EXPIRE > Date.now() / 1000) {
-        releaseData = apiCache.data;
-    } else {
-        releaseData = await fetchFromGitHub(CONFIG.GITHUB_API_URL);
-        if (releaseData) {
-            await cache.setApiCache(releaseData);
-        }
-    }
-
-    if (!releaseData || !releaseData.assets) {
-        return new Response('Release data not found', { status: 404 });
-    }
-
-    // 验证版本
-    if (releaseData.tag_name !== version) {
-        return new Response('Version mismatch', { status: 400 });
-    }
-
-    // 获取资源信息
-    const assetIndex = parseInt(downloadId);
-    if (assetIndex < 0 || assetIndex >= releaseData.assets.length) {
-        return new Response('Invalid asset index', { status: 400 });
-    }
-
-    const asset = releaseData.assets[assetIndex];
-    const filename = asset.name;
-    const filesize = asset.size || 0;
-    const downloadUrl = asset.browser_download_url;
-
-    // 检查文件缓存
-    const fileCache = await cache.getFileCache(filename);
-    const isValidCache = fileCache && 
-        fileCache.version === version && 
-        fileCache.size === filesize &&
-        fileCache.timestamp + CONFIG.CACHE_EXPIRE > Date.now() / 1000;
-
-    if (isValidCache) {
-        // 从缓存返回文件
-        await cache.incrementDownloadCount(filename);
-        return new Response(fileCache.data, {
-            headers: {
-                'Content-Type': 'application/octet-stream',
-                'Content-Disposition': `attachment; filename="${filename}"`,
-                'Content-Length': filesize.toString(),
-                'Cache-Control': 'public, max-age=86400',
-                'X-Cache-Status': 'HIT'
-            }
-        });
-    }
-
-    // 文件未缓存或已过期，需要下载
-    if (filesize > CONFIG.SINGLE_FILE_LIMIT) {
-        // 文件过大，直接重定向到GitHub
-        return Response.redirect(downloadUrl, 302);
-    }
-
-    try {
-        // 下载并缓存文件
-        const fileResponse = await fetch(downloadUrl, {
-            headers: {
-                'User-Agent': CONFIG.USER_AGENT
-            }
-        });
-
-        if (!fileResponse.ok) {
-            throw new Error(`Failed to download file: ${fileResponse.status}`);
-        }
-
-        const fileData = await fileResponse.arrayBuffer();
-        
-        // 验证文件大小
-        if (fileData.byteLength !== filesize) {
-            console.warn(`File size mismatch: expected ${filesize}, got ${fileData.byteLength}`);
-        }
-
-        // 保存到缓存
-        await cache.setFileCache(filename, {
-            data: fileData,
-            version: version,
-            size: fileData.byteLength,
-            timestamp: Date.now() / 1000,
-            download_count: 1
-        });
-
-        return new Response(fileData, {
-            headers: {
-                'Content-Type': 'application/octet-stream',
-                'Content-Disposition': `attachment; filename="${filename}"`,
-                'Content-Length': fileData.byteLength.toString(),
-                'Cache-Control': 'public, max-age=86400',
-                'X-Cache-Status': 'MISS'
-            }
-        });
-
-    } catch (error) {
-        console.error('Download error:', error);
-        // 下载失败，重定向到GitHub原始链接
-        return Response.redirect(downloadUrl, 302);
-    }
-}
-
-// 处理缓存刷新
-async function handleRefresh(context) {
-    const { env } = context;
-    const cache = new CacheManager(env);
-    
-    // 清除API缓存
-    await cache.clearApiCache();
-    
-    return new Response(JSON.stringify({
-        status: 'success',
-        message: 'Cache refreshed',
-        timestamp: new Date().toISOString()
-    }), {
-        headers: { 'Content-Type': 'application/json' }
-    });
-}
-
-// 处理缓存调试
-async function handleDebugCache(context) {
-    const { env } = context;
-    const cache = new CacheManager(env);
-    
-    const apiCache = await cache.getApiCache();
-    const fileList = await cache.listFileCache();
-    
-    return new Response(JSON.stringify({
-        api_cache: apiCache ? {
-            exists: true,
-            age: Math.floor(Date.now() / 1000 - apiCache.timestamp),
-            remaining: CONFIG.CACHE_EXPIRE - Math.floor(Date.now() / 1000 - apiCache.timestamp),
-            version: apiCache.data?.tag_name || 'unknown'
-        } : { exists: false },
-        file_cache: {
-            count: fileList.length,
-            files: fileList
-        },
-        config: CONFIG
-    }, null, 2), {
-        headers: { 'Content-Type': 'application/json' }
-    });
-}
-
-// 处理访问测试
-async function handleTestAccess(context) {
-    const { env } = context;
-    
-    return new Response(JSON.stringify({
-        status: 'success',
-        message: 'EdgeOne Functions is working',
-        timestamp: new Date().toISOString(),
-        environment: typeof env !== 'undefined' ? 'edge' : 'unknown'
-    }), {
-        headers: { 'Content-Type': 'application/json' }
-    });
-}
-
-// 处理下载测试
-async function handleTestDownload(context) {
-    const { request, env } = context;
-    const url = new URL(request.url);
-    const downloadId = url.searchParams.get('d') || '0';
-    const version = url.searchParams.get('v');
-
-    if (!version) {
-        return new Response('Version parameter required', { status: 400 });
-    }
-
-    // 获取发布数据用于测试
-    const releaseData = await fetchFromGitHub(CONFIG.GITHUB_API_URL);
-    if (!releaseData || !releaseData.assets) {
-        return new Response('No release data available', { status: 404 });
-    }
-
-    const assetIndex = parseInt(downloadId);
-    if (assetIndex >= releaseData.assets.length) {
-        return new Response('Invalid asset index', { status: 400 });
-    }
-
-    const asset = releaseData.assets[assetIndex];
-    const cache = new CacheManager(env);
-    const fileCache = await cache.getFileCache(asset.name);
-
-    return new Response(JSON.stringify({
-        asset_info: {
-            name: asset.name,
-            size: asset.size,
-            download_url: asset.browser_download_url
-        },
-        cache_status: {
-            exists: !!fileCache,
-            valid: fileCache ? (fileCache.version === version && 
-                              fileCache.timestamp + CONFIG.CACHE_EXPIRE > Date.now() / 1000) : false,
-            size: fileCache?.size || 0
-        },
-        test_url: `/api/download?d=${downloadId}&v=${encodeURIComponent(version)}`
-    }, null, 2), {
-        headers: { 'Content-Type': 'application/json' }
-    });
-}
-
-// 缓存管理类
-class CacheManager {
-    constructor(env) {
-        this.env = env;
-        // EdgeOne Pages的KV存储，根据实际API调整
-        this.kv = env.CACHE_KV || env.KV; // 根据EdgeOne的实际KV存储名称调整
-    }
-
-    async getApiCache() {
-        if (!this.kv) return null;
-        try {
-            const data = await this.kv.get('github_api_cache', 'json');
-            return data;
-        } catch (error) {
-            console.error('Failed to get API cache:', error);
-            return null;
-        }
-    }
-
-    async setApiCache(data) {
-        if (!this.kv) return;
-        try {
-            await this.kv.put('github_api_cache', JSON.stringify({
-                data: data,
-                timestamp: Date.now() / 1000
-            }));
-        } catch (error) {
-            console.error('Failed to set API cache:', error);
-        }
-    }
-
-    async clearApiCache() {
-        if (!this.kv) return;
-        try {
-            await this.kv.delete('github_api_cache');
-        } catch (error) {
-            console.error('Failed to clear API cache:', error);
-        }
-    }
-
-    async getFileCache(filename) {
-        if (!this.kv) return null;
-        try {
-            const key = `file_${this.hashFilename(filename)}`;
-            const data = await this.kv.get(key, 'json');
-            return data;
-        } catch (error) {
-            console.error('Failed to get file cache:', error);
-            return null;
-        }
-    }
-
-    async setFileCache(filename, data) {
-        if (!this.kv) return;
-        try {
-            const key = `file_${this.hashFilename(filename)}`;
-            await this.kv.put(key, JSON.stringify(data));
-        } catch (error) {
-            console.error('Failed to set file cache:', error);
-        }
-    }
-
-    async incrementDownloadCount(filename) {
-        const fileCache = await this.getFileCache(filename);
-        if (fileCache) {
-            fileCache.download_count = (fileCache.download_count || 0) + 1;
-            await this.setFileCache(filename, fileCache);
-        }
-    }
-
-    async listFileCache() {
-        if (!this.kv) return [];
-        try {
-            // EdgeOne KV的列表API，根据实际API调整
-            const list = await this.kv.list({ prefix: 'file_' });
-            return list.keys || [];
-        } catch (error) {
-            console.error('Failed to list file cache:', error);
-            return [];
-        }
-    }
-
-    hashFilename(filename) {
-        // 简单的哈希函数，用于生成KV键名
-        let hash = 0;
-        for (let i = 0; i < filename.length; i++) {
-            const char = filename.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // Convert to 32bit integer
-        }
-        return Math.abs(hash).toString(36);
-    }
-}
-
-// 从GitHub API获取数据
-async function fetchFromGitHub(url) {
-    try {
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': CONFIG.USER_AGENT,
-                'Accept': 'application/vnd.github.v3+json'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`GitHub API error: ${response.status}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error('Failed to fetch from GitHub:', error);
-        return null;
-    }
-}
-
-// 后台预下载资源（异步执行）
-async function predownloadAssets(assets, version, env) {
-    const cache = new CacheManager(env);
-    
-    for (const asset of assets) {
-        try {
-            const filename = asset.name;
-            const filesize = asset.size || 0;
             
-            // 跳过过大的文件
-            if (filesize > CONFIG.SINGLE_FILE_LIMIT) {
-                continue;
+            .header h1 {
+                font-size: 1.8em;
             }
-
-            // 检查是否已缓存
-            const existing = await cache.getFileCache(filename);
-            if (existing && existing.version === version && existing.size === filesize) {
-                continue; // 已经缓存且版本匹配
+            
+            .header p {
+                font-size: 0.9em;
             }
+            
+            .download-buttons {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .download-btn {
+                font-size: 0.9em;
+                padding: 8px 15px;
+            }
+            
+            .mode-buttons {
+                flex-direction: column;
+            }
+            
+            .cache-status-notice {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .cache-status-notice .notice-icon {
+                font-size: 1.2em;
+            }
+            
+            .predownload-notice {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .notice-icon {
+                font-size: 1.5em;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 BetterGI下载页</h1>
+            <p>Better Genshin Impact - 快速、稳定的下载体验</p>
+            <div id="version-info"></div>
+        </div>
 
-            // 下载并缓存
-            const response = await fetch(asset.browser_download_url, {
-                headers: { 'User-Agent': CONFIG.USER_AGENT }
+        <div class="main-content">
+            <div id="cache-info"></div>
+            <div id="predownload-info"></div>
+
+            <div class="mode-selector">
+                <div class="mode-buttons">
+                    <button class="mode-btn active" onclick="switchMode('proxy')" id="proxy-btn">
+                        🔄 代理下载模式
+                    </button>
+                    <button class="mode-btn" onclick="switchMode('direct')" id="direct-btn">
+                        ⚡ 直连下载模式
+                    </button>
+                </div>
+                
+                <div id="mode-info-proxy" class="download-mode-info active">
+                    <strong>🔄 代理下载模式：</strong>
+                    <ul>
+                        <li>文件通过EdgeOne边缘节点中转，稳定可靠</li>
+                        <li>支持全球CDN加速分发</li>
+                        <li>自动缓存1GB内文件，后续下载极速响应</li>
+                        <li>支持断点续传，大文件下载更稳定</li>
+                        <li>推荐GitHub直连速度慢的用户使用</li>
+                    </ul>
+                </div>
+                
+                <div id="mode-info-direct" class="download-mode-info">
+                    <strong>⚡ 直连下载模式：</strong>
+                    <ul>
+                        <li>文件直接从GitHub CDN下载</li>
+                        <li>无需经过第三方服务器</li>
+                        <li>适合网络环境良好的用户</li>
+                        <li>GitHub官方CDN分发</li>
+                        <li>下载速度取决于本地网络环境</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="main-content-area">
+                <div class="loading">
+                    <div style="font-size: 2em; margin-bottom: 10px;">⏳</div>
+                    <p>正在加载发布信息...</p>
+                </div>
+            </div>
+
+            <div class="github-link">
+                <p>
+                    🔗 <a href="https://github.com/babalae/better-genshin-impact" target="_blank">
+                        访问项目GitHub主页
+                    </a> |
+                    <a href="https://github.com/babalae/better-genshin-impact/releases" target="_blank">
+                        查看所有版本
+                    </a> |
+                    <a href="javascript:void(0)" onclick="refreshCache()" style="color: #007bff;">
+                        🔄 刷新缓存
+                    </a>
+                </p>
+                
+                <details style="margin-top: 15px;">
+                    <summary style="cursor: pointer; color: #6c757d; font-size: 0.9em;">🔧 调试工具</summary>
+                    <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 0.85em;">
+                        <a href="javascript:void(0)" onclick="debugCache()" style="color: #6c757d; text-decoration: none; margin-right: 15px;">
+                            🔍 缓存调试
+                        </a>
+                        <a href="javascript:void(0)" onclick="testAccess()" style="color: #6c757d; text-decoration: none; margin-right: 15px;">
+                            🌐 访问测试
+                        </a>
+                        <a href="javascript:void(0)" onclick="testDownload()" style="color: #6c757d; text-decoration: none;">
+                            🧪 下载测试
+                        </a>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'proxy';
+        let releaseData = null;
+        let cacheInfo = null;
+
+        // API配置
+        const API_BASE = '/api';  // EdgeOne Functions路径
+        const CACHE_EXPIRE = 3600; // 1小时缓存
+
+        // 初始化页面
+        async function initPage() {
+            try {
+                await loadReleaseData();
+                renderPage();
+            } catch (error) {
+                console.error('Failed to load release data:', error);
+                showError('无法加载发布信息，请稍后重试。');
+            }
+        }
+
+        // 加载发布数据
+        async function loadReleaseData() {
+            const response = await fetch(`${API_BASE}/release`);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            const data = await response.json();
+            releaseData = data.release;
+            cacheInfo = data.cache_info;
+        }
+
+        // 渲染页面
+        function renderPage() {
+            renderVersionInfo();
+            renderCacheInfo();
+            renderPredownloadInfo();
+            renderDownloads();
+        }
+
+        // 渲染版本信息
+        function renderVersionInfo() {
+            const versionDiv = document.getElementById('version-info');
+            if (releaseData && releaseData.tag_name) {
+                const releaseDate = releaseData.published_at ? 
+                    new Date(releaseData.published_at).toLocaleDateString('zh-CN') : '未知日期';
+                versionDiv.innerHTML = `
+                    <div class="version-badge">
+                        最新版本: ${releaseData.tag_name} (${releaseDate})
+                    </div>
+                `;
+            }
+        }
+
+        // 渲染缓存信息
+        function renderCacheInfo() {
+            const cacheDiv = document.getElementById('cache-info');
+            if (cacheInfo && cacheInfo.exists) {
+                const remaining = Math.floor(cacheInfo.remaining / 60);
+                cacheDiv.innerHTML = `
+                    <div class="cache-status-notice">
+                        <div class="notice-icon">ℹ️</div>
+                        <div class="notice-content">
+                            <h4>API缓存状态</h4>
+                            <p>GitHub API数据已缓存，剩余有效时间: ${remaining}分钟 (避免频繁API调用限制)</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // 渲染预下载信息
+        function renderPredownloadInfo() {
+            const predownloadDiv = document.getElementById('predownload-info');
+            if (!releaseData || !releaseData.assets) return;
+
+            // 计算可缓存文件信息
+            const singleFileLimit = 1024 * 1024 * 1024; // 1GB
+            let cacheableCount = 0;
+            let totalSize = 0;
+
+            releaseData.assets.forEach(asset => {
+                if (asset.size > 0 && asset.size <= singleFileLimit) {
+                    cacheableCount++;
+                    totalSize += asset.size;
+                }
             });
 
-            if (response.ok) {
-                const data = await response.arrayBuffer();
-                await cache.setFileCache(filename, {
-                    data: data,
-                    version: version,
-                    size: data.byteLength,
-                    timestamp: Date.now() / 1000,
-                    download_count: 0
-                });
-                console.log(`Predownloaded: ${filename}`);
+            if (cacheableCount > 0) {
+                const totalSizeMB = (totalSize / 1024 / 1024).toFixed(1);
+                predownloadDiv.innerHTML = `
+                    <div class="predownload-notice">
+                        <div class="notice-icon">🚀</div>
+                        <div class="notice-content">
+                            <h4>智能缓存系统</h4>
+                            <p>
+                                系统管理 ${cacheableCount} 个可缓存文件（共 ${totalSizeMB} MB），
+                                首次访问可能需要等待，后续下载将享受极速体验！
+                            </p>
+                        </div>
+                    </div>
+                `;
             }
-        } catch (error) {
-            console.error(`Failed to predownload ${asset.name}:`, error);
         }
-    }
-}
+
+        // 渲染下载列表
+        function renderDownloads() {
+            const contentArea = document.getElementById('main-content-area');
+            
+            if (!releaseData || !releaseData.assets) {
+                showError('无法获取发布信息');
+                return;
+            }
+
+            let downloadsHtml = `
+                <div class="downloads-section">
+                    <h2>📦 文件下载</h2>
+            `;
+
+            releaseData.assets.forEach((asset, index) => {
+                const sizeMB = (asset.size / 1024 / 1024).toFixed(2);
+                const updateTime = asset.updated_at ? 
+                    new Date(asset.updated_at).toLocaleDateString('zh-CN') : '未知';
+                
+                const proxyUrl = `${API_BASE}/download?d=${index}&v=${encodeURIComponent(releaseData.tag_name)}`;
+                
+                downloadsHtml += `
+                    <div class="download-item">
+                        <div class="download-info">
+                            <div class="file-details">
+                                <div class="file-name">
+                                    📄 ${asset.name}
+                                    <span style="color: #ffc107; font-size: 0.8em;">🔄 可缓存</span>
+                                </div>
+                                <div class="file-meta">
+                                    <span>大小: ${sizeMB} MB</span>
+                                    <span>下载次数: ${asset.download_count?.toLocaleString() || 0}</span>
+                                    <span>更新时间: ${updateTime}</span>
+                                </div>
+                            </div>
+                            <div class="download-buttons">
+                                <a href="${proxyUrl}" 
+                                   class="download-btn btn-proxy proxy-download"
+                                   title="通过EdgeOne代理服务器下载">
+                                    🔄 代理下载
+                                </a>
+                                <a href="${asset.browser_download_url}" 
+                                   class="download-btn btn-github direct-download"
+                                   target="_blank"
+                                   title="直接从GitHub下载">
+                                    ⚡ 直连下载
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            downloadsHtml += '</div>';
+
+            // 添加发布说明
+            if (releaseData.body && releaseData.body.trim()) {
+                downloadsHtml += `
+                    <div class="release-notes">
+                        <h3>📋 更新日志</h3>
+                        ${parseMarkdown(releaseData.body)}
+                    </div>
+                `;
+            }
+
+            contentArea.innerHTML = downloadsHtml;
+
+            // 添加下载按钮事件监听
+            addDownloadListeners();
+        }
+
+        // 简单的Markdown解析
+        function parseMarkdown(text) {
+            return text
+                .replace(/^### (.*$)/gim, '<h4>$1</h4>')
+                .replace(/^## (.*$)/gim, '<h3>$1</h3>')
+                .replace(/^# (.*$)/gim, '<h2>$1</h2>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/```(.*?)```/gs, '<pre><code>$1</code></pre>')
+                .replace(/`(.*?)`/g, '<code>$1</code>')
+                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+                .replace(/^[\*\-\+] (.*)$/gim, '<li>$1</li>')
+                .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+                .replace(/^\d+\. (.*)$/gim, '<li>$1</li>')
+                .replace(/^> (.*)$/gim, '<blockquote>$1</blockquote>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>')
+                .replace(/^(.*)$/, '<p>$1</p>')
+                .replace(/<p><\/p>/g, '');
+        }
+
+        // 切换下载模式
+        function switchMode(mode) {
+            if (currentMode === mode) return;
+            
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(mode + '-btn').classList.add('active');
+            
+            document.querySelectorAll('.download-mode-info').forEach(info => {
+                info.classList.remove('active');
+            });
+            document.getElementById('mode-info-' + mode).classList.add('active');
+            
+            if (mode === 'proxy') {
+                document.querySelectorAll('.proxy-download').forEach(btn => {
+                    btn.style.display = 'inline-flex';
+                });
+                document.querySelectorAll('.direct-download').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+            } else {
+                document.querySelectorAll('.proxy-download').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+                document.querySelectorAll('.direct-download').forEach(btn => {
+                    btn.style.display = 'inline-flex';
+                });
+            }
+            
+            currentMode = mode;
+        }
+
+        // 添加下载按钮监听
+        function addDownloadListeners() {
+            document.querySelectorAll('.proxy-download').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '🔄 正在代理下载...';
+                    this.style.opacity = '0.7';
+                    this.style.pointerEvents = 'none';
+                    
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                        this.style.opacity = '1';
+                        this.style.pointerEvents = 'auto';
+                    }, 30000);
+                });
+            });
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            const contentArea = document.getElementById('main-content-area');
+            contentArea.innerHTML = `
+                <div class="error">
+                    <h3>⚠️ 错误</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        // 刷新缓存
+        async function refreshCache() {
+            try {
+                await fetch(`${API_BASE}/refresh`, { method: 'POST' });
+                location.reload();
+            } catch (error) {
+                alert('刷新缓存失败: ' + error.message);
+            }
+        }
+
+        // 调试功能
+        async function debugCache() {
+            try {
+                const response = await fetch(`${API_BASE}/debug/cache`);
+                const data = await response.json();
+                console.log('Cache Debug:', data);
+                alert('调试信息已输出到控制台');
+            } catch (error) {
+                alert('调试失败: ' + error.message);
+            }
+        }
+
+        async function testAccess() {
+            try {
+                const response = await fetch(`${API_BASE}/test/access`);
+                const data = await response.json();
+                console.log('Access Test:', data);
+                alert('测试完成，结果已输出到控制台');
+            } catch (error) {
+                alert('测试失败: ' + error.message);
+            }
+        }
+
+        async function testDownload() {
+            if (releaseData && releaseData.assets && releaseData.assets.length > 0) {
+                const testUrl = `${API_BASE}/test/download?d=0&v=${encodeURIComponent(releaseData.tag_name)}`;
+                window.open(testUrl, '_blank');
+            } else {
+                alert('没有可测试的文件');
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initPage();
+            switchMode('proxy');
+        });
+    </script>
+</body>
+</html>
