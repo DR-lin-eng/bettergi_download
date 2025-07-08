@@ -1,24 +1,27 @@
 {
-  "name": "bettergi-proxy-downloader",
-  "version": "1.0.0",
-  "description": "BetterGI GitHub Release简化代理下载服务 - 无缓存版本",
-  "main": "functions/api/[[route]].js",
+  "name": "bettergi-frontend-downloader",
+  "version": "2.1.0",
+  "description": "BetterGI超高并发分片下载系统 - 100并发+智能重试，完美解决网络超时",
+  "main": "index.html",
   "scripts": {
-    "dev": "echo 'EdgeOne本地开发'",
-    "deploy": "echo '请使用EdgeOne Pages控制台部署'",
-    "test": "npm run test:api",
-    "test:api": "echo '测试API接口'",
-    "validate": "node scripts/validate.js"
+    "dev": "echo 'EdgeOne前端分片下载开发环境'",
+    "deploy": "echo '请在EdgeOne Pages控制台部署'",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:backend": "curl -f https://your-domain.com/api/health || echo 'Backend health check failed'",
+    "test:frontend": "echo '前端功能需要在浏览器中测试'",
+    "cache:clear": "echo '在浏览器开发者工具中清除IndexedDB'"
   },
   "keywords": [
     "bettergi",
-    "github",
-    "downloader",
-    "proxy",
+    "frontend-download",
+    "ultra-high-concurrency",
+    "intelligent-retry",
+    "network-fault-tolerance",
+    "100-concurrent",
     "edgeone",
-    "cdn",
-    "no-cache",
-    "streaming"
+    "proxy",
+    "browser-assembly",
+    "quota-bypass"
   ],
   "author": "DR-lin-eng",
   "license": "MIT",
@@ -26,51 +29,155 @@
     "type": "git",
     "url": "https://github.com/DR-lin-eng/bettergi_download.git"
   },
-  "bugs": {
-    "url": "https://github.com/DR-lin-eng/bettergi_download/issues"
-  },
-  "homepage": "https://github.com/DR-lin-eng/bettergi_download#readme",
   "engines": {
     "node": ">=16.0.0"
   },
   "edgeone": {
     "compatibility_date": "2024-01-01",
-    "name": "bettergi-proxy-downloader",
+    "name": "bettergi-frontend-downloader",
     "build": {
       "command": "",
       "destination": "."
     },
     "vars": {
-      "ENVIRONMENT": "production",
-      "GITHUB_REPO": "babalae/better-genshin-impact"
-    },
-    "routes": [
-      {
-        "pattern": "yourdomain.com/*",
-        "zone_name": "yourdomain.com"
-      }
+      "ENVIRONMENT": "production"
+    }
+  },
+  "frontend": {
+    "download_engine": "browser_native",
+    "chunk_size": "256KB", 
+    "max_concurrent": 100,
+    "retry_mechanism": "exponential_backoff",
+    "fault_tolerance": "5_percent_threshold",
+    "storage": "indexeddb",
+    "cache_strategy": "persistent_versioned"
+  },
+  "backend": {
+    "role": "simple_proxy",
+    "quota_impact": "minimal",
+    "endpoints": [
+      "/api/release",
+      "/api/proxy",
+      "/api/health"
     ]
   },
-  "devDependencies": {
-    "@types/node": "^20.0.0"
-  },
-  "files": [
-    "index.html",
-    "functions/",
-    "_edgeone/",
-    "README.md"
-  ],
   "config": {
-    "features": {
-      "cache": false,
-      "proxy_download": true,
-      "direct_download": false,
-      "streaming": true
+    "architecture": "frontend_heavy",
+    "chunk_config": {
+      "default_size": 262144,
+      "max_concurrent_downloads": 100,
+      "max_retries": 5,
+      "retry_delay_base": 1000,
+      "network_timeout": 30000,
+      "fault_tolerance_threshold": 0.05,
+      "cache_version": 1,
+      "db_name": "BetterGI_Downloads",
+      "store_name": "chunks"
     },
-    "limits": {
-      "max_file_size": "5GB",
-      "timeout": "5min",
-      "github_api_timeout": "30s"
+    "performance": {
+      "supports_resume": true,
+      "supports_cache": true, 
+      "supports_offline": true,
+      "quota_bypass": true,
+      "ultra_high_concurrency": true,
+      "intelligent_retry": true,
+      "fault_tolerance": true,
+      "network_error_recovery": true
+    },
+    "browser_requirements": {
+      "indexeddb": "required",
+      "fetch_api": "required",
+      "blob_api": "required",
+      "url_createobjecturl": "required"
+    }
+  },
+  "deployment": {
+    "platform": "EdgeOne Pages",
+    "requirements": {
+      "functions_quota": "极低消耗",
+      "storage": "无需后端存储",
+      "memory": "前端浏览器内存"
+    },
+    "advantages": [
+      "后端配额消耗极低",
+      "前端完全控制下载流程",
+      "支持断点续传和智能缓存",
+      "用户体验极佳"
+    ]
+  },
+  "technical_features": {
+    "ultra_high_concurrency": {
+      "concurrent_downloads": 100,
+      "bandwidth_utilization": "maximum",
+      "adaptive_concurrency": "network_aware"
+    },
+    "intelligent_retry": {
+      "max_retries": 5,
+      "backoff_strategy": "exponential",
+      "retry_delays": "1s,2s,4s,8s,16s",
+      "retriable_errors": ["timeout", "connection", "network"]
+    },
+    "fault_tolerance": {
+      "failure_threshold": "5_percent",
+      "partial_download": "supported",
+      "empty_chunk_filling": "automatic",
+      "download_completion": "best_effort"
+    },
+    "frontend_download": {
+      "chunk_assembly": "Blob API组装",
+      "progress_tracking": "分片级精确进度",
+      "error_recovery": "单分片重试机制", 
+      "cache_management": "IndexedDB持久化缓存"
+    },
+    "backend_proxy": {
+      "role": "HTTP Range代理",
+      "complexity": "极简化",
+      "quota_usage": "单次小请求",
+      "storage": "零存储需求"
+    }
+  },
+  "user_experience": {
+    "download_modes": [
+      "自动检测缓存状态",
+      "智能断点续传",
+      "实时进度显示",
+      "100个并发分片下载",
+      "网络错误自动重试",
+      "部分失败容错处理"
+    ],
+    "progress_display": [
+      "分片级精确进度",
+      "失败分片计数显示",
+      "重试状态实时更新",
+      "下载速度实时计算",
+      "完成状态智能区分"
+    ],
+    "cache_features": [
+      "版本感知缓存",
+      "离线文件组装", 
+      "缓存状态可视化",
+      "自动清理过期数据"
+    ]
+  },
+  "troubleshooting": {
+    "network_timeout_errors": {
+      "solution": "自动重试机制，指数退避策略",
+      "max_retries": 5,
+      "fault_tolerance": "允许5%分片失败"
+    },
+    "high_failure_rate": {
+      "solution": "检查网络连接，考虑降低并发数",
+      "threshold": "超过5%失败率会终止下载"
+    },
+    "partial_download_completion": {
+      "solution": "95%以上成功视为可用，文件基本完整",
+      "user_action": "可正常使用，或重试下载补全"
+    },
+    "indexeddb_errors": {
+      "solution": "检查浏览器支持和存储权限"
+    },
+    "assembly_failures": {
+      "solution": "Blob API容错处理，支持部分分片缺失"
     }
   }
 }

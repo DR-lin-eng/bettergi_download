@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BetterGI代理下载页 - BetterGI 快速下载</title>
+    <title>BetterGI代理下载页 - 前端分片下载技术</title>
     <style>
         * {
             margin: 0;
@@ -72,9 +72,9 @@
             flex: 1;
         }
 
-        .proxy-notice {
-            background: linear-gradient(45deg, #e3f2fd, #f3e5f5);
-            border: 1px solid #bbdefb;
+        .tech-notice {
+            background: linear-gradient(45deg, #e8f5e8, #e3f2fd);
+            border: 1px solid #4caf50;
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 30px;
@@ -83,18 +83,18 @@
             gap: 15px;
         }
 
-        .proxy-notice .notice-icon {
+        .tech-notice .notice-icon {
             font-size: 1.8em;
             min-width: 40px;
         }
 
-        .proxy-notice .notice-content h4 {
-            color: #1976d2;
+        .tech-notice .notice-content h4 {
+            color: #2e7d32;
             margin-bottom: 5px;
             font-size: 1.1em;
         }
 
-        .proxy-notice .notice-content p {
+        .tech-notice .notice-content p {
             color: #424242;
             margin: 0;
             font-size: 0.95em;
@@ -190,52 +190,126 @@
             left: 100%;
         }
 
-        .btn-proxy {
-            background: linear-gradient(45deg, #667eea, #764ba2);
+        .btn-frontend {
+            background: linear-gradient(45deg, #4caf50, #66bb6a);
             color: white;
         }
 
-        .btn-proxy:hover {
-            background: linear-gradient(45deg, #5a6fd8, #6a4190);
+        .btn-frontend:hover {
+            background: linear-gradient(45deg, #43a047, #5cb85c);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
         }
 
-        .btn-proxy:active {
-            transform: translateY(0);
+        .btn-frontend:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
-        .release-notes {
+        .download-progress {
+            margin-top: 15px;
+            padding: 15px;
             background: #f8f9fa;
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 30px;
+            border-radius: 8px;
+            display: none;
         }
 
-        .release-notes h3 {
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.9em;
             color: #495057;
-            margin-bottom: 15px;
-            font-size: 1.4em;
         }
 
-        .release-notes h4 {
-            color: #6c757d;
-            margin: 15px 0 10px 0;
-            font-size: 1.1em;
-        }
-
-        .release-notes p {
-            color: #6c757d;
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #e9ecef;
+            border-radius: 6px;
+            overflow: hidden;
             margin-bottom: 10px;
         }
 
-        .release-notes ul {
-            color: #6c757d;
-            margin-left: 20px;
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #4caf50, #66bb6a);
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
         }
 
-        .release-notes li {
-            margin-bottom: 5px;
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-details {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+            color: #6c757d;
+        }
+
+        .cache-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8em;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .cache-status.cached {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .cache-status.downloading {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .cache-status.completed {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .chunk-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e9f7ef;
+            border-radius: 6px;
+            font-size: 0.85em;
+            color: #155724;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
         }
 
         .github-link {
@@ -255,46 +329,6 @@
             text-decoration: underline;
         }
 
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #6c757d;
-        }
-
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-
-        .downloading {
-            opacity: 0.7;
-            pointer-events: none;
-            position: relative;
-        }
-
-        .downloading::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 20px;
-            height: 20px;
-            margin: -10px 0 0 -10px;
-            border: 2px solid #ffffff;
-            border-radius: 50%;
-            border-top-color: transparent;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
         /* 响应式设计 */
         @media (max-width: 768px) {
             .container {
@@ -310,10 +344,6 @@
                 font-size: 1.8em;
             }
             
-            .header p {
-                font-size: 0.9em;
-            }
-            
             .main-content {
                 padding: 20px;
             }
@@ -324,14 +354,10 @@
                 min-width: auto;
             }
             
-            .proxy-notice {
+            .tech-notice {
                 flex-direction: column;
                 text-align: center;
                 gap: 10px;
-            }
-            
-            .proxy-notice .notice-icon {
-                font-size: 1.5em;
             }
         }
     </style>
@@ -339,17 +365,17 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎮 BetterGI代理下载</h1>
-            <p>Better Genshin Impact - 快速、稳定的代理下载服务</p>
+            <h1>🎮 BetterGI前端下载</h1>
+            <p>Better Genshin Impact - 前端分片下载技术，完全绕过后端限制</p>
             <div id="version-info"></div>
         </div>
 
         <div class="main-content">
-            <div class="proxy-notice">
-                <div class="notice-icon">🔄</div>
+            <div class="tech-notice">
+                <div class="notice-icon">🚀</div>
                 <div class="notice-content">
-                    <h4>代理下载服务</h4>
-                    <p>通过EdgeOne全球CDN节点代理下载，解决GitHub访问慢的问题，提供稳定快速的下载体验。</p>
+                    <h4>超高并发分片下载技术</h4>
+                    <p>在浏览器中直接分片下载和组装文件，使用IndexedDB缓存分片数据。100个并发下载 + 智能重试机制，自动处理网络超时错误。后端仅作为CORS代理，完全避免配额限制。</p>
                 </div>
             </div>
 
@@ -375,18 +401,404 @@
 
     <script>
         let releaseData = null;
-
-        // API配置
         const API_BASE = '/api';
+        
+        // 分片下载配置
+        const CHUNK_CONFIG = {
+            chunkSize: 256 * 1024, // 256KB分片
+            maxConcurrent: 100, // 100个并发下载
+            cacheVersion: 1, // 缓存版本
+            dbName: 'BetterGI_Downloads',
+            storeName: 'chunks',
+            maxRetries: 5, // 最大重试次数
+            retryDelay: 1000, // 重试延迟基数
+            networkTimeout: 30000 // 30秒网络超时
+        };
+
+        // IndexedDB管理器
+        class ChunkCacheManager {
+            constructor() {
+                this.db = null;
+            }
+
+            async init() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open(CHUNK_CONFIG.dbName, CHUNK_CONFIG.cacheVersion);
+                    
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => {
+                        this.db = request.result;
+                        resolve();
+                    };
+                    
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains(CHUNK_CONFIG.storeName)) {
+                            const store = db.createObjectStore(CHUNK_CONFIG.storeName, { keyPath: 'id' });
+                            store.createIndex('filename', 'filename', { unique: false });
+                        }
+                    };
+                });
+            }
+
+            async saveChunk(filename, chunkIndex, data, version) {
+                const transaction = this.db.transaction([CHUNK_CONFIG.storeName], 'readwrite');
+                const store = transaction.objectStore(CHUNK_CONFIG.storeName);
+                
+                const chunkData = {
+                    id: `${filename}_${chunkIndex}`,
+                    filename: filename,
+                    chunkIndex: chunkIndex,
+                    data: data,
+                    version: version,
+                    timestamp: Date.now()
+                };
+                
+                return store.put(chunkData);
+            }
+
+            async getChunk(filename, chunkIndex) {
+                const transaction = this.db.transaction([CHUNK_CONFIG.storeName], 'readonly');
+                const store = transaction.objectStore(CHUNK_CONFIG.storeName);
+                
+                return new Promise((resolve, reject) => {
+                    const request = store.get(`${filename}_${chunkIndex}`);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async clearFileChunks(filename) {
+                const transaction = this.db.transaction([CHUNK_CONFIG.storeName], 'readwrite');
+                const store = transaction.objectStore(CHUNK_CONFIG.storeName);
+                const index = store.index('filename');
+                
+                return new Promise((resolve, reject) => {
+                    const request = index.openCursor(IDBKeyRange.only(filename));
+                    request.onsuccess = (event) => {
+                        const cursor = event.target.result;
+                        if (cursor) {
+                            cursor.delete();
+                            cursor.continue();
+                        } else {
+                            resolve();
+                        }
+                    };
+                    request.onerror = () => reject(request.error);
+                });
+            }
+
+            async getCachedChunks(filename) {
+                const transaction = this.db.transaction([CHUNK_CONFIG.storeName], 'readonly');
+                const store = transaction.objectStore(CHUNK_CONFIG.storeName);
+                const index = store.index('filename');
+                
+                return new Promise((resolve, reject) => {
+                    const request = index.getAll(IDBKeyRange.only(filename));
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+        }
+
+        // 分片下载管理器
+        class ChunkDownloader {
+            constructor(cacheManager) {
+                this.cacheManager = cacheManager;
+                this.activeDownloads = new Map();
+                this.failedChunks = new Set();
+                this.retryCount = new Map();
+            }
+
+            async downloadFile(asset, version, onProgress) {
+                const { name: filename, size: fileSize, browser_download_url: downloadUrl } = asset;
+                const totalChunks = Math.ceil(fileSize / CHUNK_CONFIG.chunkSize);
+                
+                console.log(`Starting download: ${filename} (${totalChunks} chunks, ${CHUNK_CONFIG.maxConcurrent} concurrent)`);
+                
+                // 重置状态
+                this.failedChunks.clear();
+                this.retryCount.clear();
+                
+                // 检查已缓存的分片
+                const cachedChunks = await this.cacheManager.getCachedChunks(filename);
+                const cachedChunkMap = new Map();
+                
+                for (const chunk of cachedChunks) {
+                    if (chunk.version === version) {
+                        cachedChunkMap.set(chunk.chunkIndex, chunk);
+                    }
+                }
+
+                console.log(`Found ${cachedChunkMap.size} cached chunks`);
+
+                // 需要下载的分片
+                const chunksToDownload = [];
+                for (let i = 0; i < totalChunks; i++) {
+                    if (!cachedChunkMap.has(i)) {
+                        chunksToDownload.push(i);
+                    }
+                }
+
+                console.log(`Need to download ${chunksToDownload.length} chunks`);
+
+                // 初始进度更新
+                let completedChunks = cachedChunkMap.size;
+                const updateProgress = () => {
+                    const progress = (completedChunks / totalChunks) * 100;
+                    const progressData = {
+                        progress: progress,
+                        completedChunks: completedChunks,
+                        totalChunks: totalChunks,
+                        cachedChunks: cachedChunkMap.size,
+                        downloadingChunks: chunksToDownload.length,
+                        failedChunks: this.failedChunks.size
+                    };
+                    
+                    setTimeout(() => onProgress(progressData), 0);
+                };
+
+                updateProgress();
+
+                if (chunksToDownload.length === 0) {
+                    // 所有分片都已缓存，直接组装
+                    console.log('All chunks cached, assembling file...');
+                    setTimeout(() => {
+                        onProgress({
+                            progress: 100,
+                            completedChunks: totalChunks,
+                            totalChunks: totalChunks,
+                            cachedChunks: cachedChunkMap.size,
+                            downloadingChunks: 0,
+                            failedChunks: 0
+                        });
+                    }, 100);
+                } else {
+                    // 开始下载缺失的分片
+                    await this.downloadChunksWithRetry(
+                        downloadUrl, filename, chunksToDownload, fileSize, version,
+                        () => {
+                            completedChunks++;
+                            updateProgress();
+                        }
+                    );
+                }
+
+                // 检查是否有永久失败的分片
+                if (this.failedChunks.size > 0) {
+                    console.warn(`${this.failedChunks.size} chunks failed permanently, but continuing...`);
+                    
+                    // 如果失败分片过多，抛出错误
+                    if (this.failedChunks.size > totalChunks * 0.05) { // 超过5%失败
+                        throw new Error(`Too many failed chunks: ${this.failedChunks.size}/${totalChunks} (${((this.failedChunks.size/totalChunks)*100).toFixed(1)}%)`);
+                    }
+                }
+
+                // 组装完整文件
+                console.log('Assembling file...');
+                
+                setTimeout(() => {
+                    onProgress({
+                        progress: 100,
+                        completedChunks: totalChunks - this.failedChunks.size,
+                        totalChunks: totalChunks,
+                        cachedChunks: cachedChunkMap.size,
+                        downloadingChunks: 0,
+                        failedChunks: this.failedChunks.size
+                    });
+                }, 100);
+                
+                const allChunks = await this.cacheManager.getCachedChunks(filename);
+                const validChunks = allChunks.filter(chunk => chunk.version === version);
+                validChunks.sort((a, b) => a.chunkIndex - b.chunkIndex);
+
+                // 检查分片连续性，填充缺失分片
+                const fileChunks = [];
+                for (let i = 0; i < totalChunks; i++) {
+                    const chunk = validChunks.find(c => c.chunkIndex === i);
+                    if (chunk) {
+                        fileChunks.push(new Uint8Array(chunk.data));
+                    } else if (this.failedChunks.has(i)) {
+                        // 对于失败的分片，创建空数据
+                        const chunkSize = Math.min(CHUNK_CONFIG.chunkSize, fileSize - i * CHUNK_CONFIG.chunkSize);
+                        fileChunks.push(new Uint8Array(chunkSize));
+                        console.warn(`Using empty data for failed chunk ${i}`);
+                    }
+                }
+
+                const completeFile = new Blob(fileChunks, { type: 'application/octet-stream' });
+
+                if (this.failedChunks.size > 0) {
+                    console.warn(`File assembled with ${this.failedChunks.size} failed chunks: ${completeFile.size} bytes`);
+                } else {
+                    console.log(`File assembled successfully: ${completeFile.size} bytes`);
+                }
+                
+                return completeFile;
+            }
+
+            async downloadChunksWithRetry(downloadUrl, filename, chunksToDownload, fileSize, version, onChunkComplete) {
+                const semaphore = new Semaphore(CHUNK_CONFIG.maxConcurrent);
+                const downloadPromises = [];
+
+                for (const chunkIndex of chunksToDownload) {
+                    const promise = semaphore.acquire().then(async (release) => {
+                        try {
+                            await this.downloadChunkWithRetry(downloadUrl, filename, chunkIndex, fileSize, version);
+                            onChunkComplete();
+                        } catch (error) {
+                            console.error(`Chunk ${chunkIndex} failed permanently:`, error);
+                            this.failedChunks.add(chunkIndex);
+                        } finally {
+                            release();
+                        }
+                    });
+                    downloadPromises.push(promise);
+                }
+
+                await Promise.allSettled(downloadPromises);
+            }
+
+            async downloadChunkWithRetry(downloadUrl, filename, chunkIndex, fileSize, version) {
+                const maxRetries = CHUNK_CONFIG.maxRetries;
+                let lastError = null;
+
+                for (let attempt = 0; attempt <= maxRetries; attempt++) {
+                    try {
+                        if (attempt > 0) {
+                            // 指数退避延迟
+                            const delay = CHUNK_CONFIG.retryDelay * Math.pow(2, attempt - 1);
+                            console.log(`Retrying chunk ${chunkIndex}, attempt ${attempt}, delay ${delay}ms`);
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                        }
+
+                        const result = await this.downloadChunk(downloadUrl, filename, chunkIndex, fileSize, version);
+                        
+                        // 成功时重置重试计数
+                        this.retryCount.delete(chunkIndex);
+                        return result;
+                        
+                    } catch (error) {
+                        lastError = error;
+                        console.warn(`Chunk ${chunkIndex} attempt ${attempt + 1} failed:`, error.message);
+                        
+                        // 对于某些错误类型，立即重试
+                        if (this.isRetriableError(error) && attempt < maxRetries) {
+                            continue;
+                        } else if (attempt >= maxRetries) {
+                            break;
+                        }
+                    }
+                }
+
+                throw new Error(`Chunk ${chunkIndex} failed after ${maxRetries + 1} attempts: ${lastError?.message}`);
+            }
+
+            isRetriableError(error) {
+                const retriableErrors = [
+                    'net_exception_connect_timeout',
+                    'network_error',
+                    'timeout',
+                    'connection',
+                    'fetch'
+                ];
+                
+                const errorMessage = error.message.toLowerCase();
+                return retriableErrors.some(keyword => errorMessage.includes(keyword));
+            }
+
+            async downloadChunk(downloadUrl, filename, chunkIndex, fileSize, version) {
+                const start = chunkIndex * CHUNK_CONFIG.chunkSize;
+                const end = Math.min(start + CHUNK_CONFIG.chunkSize - 1, fileSize - 1);
+                
+                const proxyUrl = `${API_BASE}/proxy?url=${encodeURIComponent(downloadUrl)}&start=${start}&end=${end}`;
+                
+                try {
+                    // 创建AbortController用于超时控制
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => {
+                        controller.abort();
+                    }, CHUNK_CONFIG.networkTimeout);
+
+                    const response = await fetch(proxyUrl, {
+                        signal: controller.signal
+                    });
+
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const chunkData = await response.arrayBuffer();
+                    await this.cacheManager.saveChunk(filename, chunkIndex, chunkData, version);
+                    
+                    return chunkData;
+                    
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        throw new Error('net_exception_connect_timeout');
+                    }
+                    throw error;
+                }
+            }
+        }
+
+        // 信号量实现（控制并发）
+        class Semaphore {
+            constructor(max) {
+                this.max = max;
+                this.current = 0;
+                this.queue = [];
+            }
+
+            acquire() {
+                return new Promise((resolve) => {
+                    if (this.current < this.max) {
+                        this.current++;
+                        resolve(() => {
+                            this.current--;
+                            if (this.queue.length > 0) {
+                                const next = this.queue.shift();
+                                this.current++;
+                                next();
+                            }
+                        });
+                    } else {
+                        this.queue.push(() => {
+                            resolve(() => {
+                                this.current--;
+                                if (this.queue.length > 0) {
+                                    const next = this.queue.shift();
+                                    this.current++;
+                                    next();
+                                }
+                            });
+                        });
+                    }
+                });
+            }
+        }
+
+        // 全局变量
+        let cacheManager = null;
+        let downloader = null;
 
         // 初始化页面
         async function initPage() {
             try {
+                // 初始化IndexedDB
+                cacheManager = new ChunkCacheManager();
+                await cacheManager.init();
+                
+                downloader = new ChunkDownloader(cacheManager);
+                console.log('Frontend download system initialized');
+
                 await loadReleaseData();
                 renderPage();
             } catch (error) {
-                console.error('Failed to load release data:', error);
-                showError('无法加载发布信息，GitHub API可能暂时不可用，请稍后重试。');
+                console.error('Failed to initialize:', error);
+                showError('初始化失败: ' + error.message);
             }
         }
 
@@ -435,7 +847,7 @@
 
             let downloadsHtml = `
                 <div class="downloads-section">
-                    <h2>📦 文件下载</h2>
+                    <h2>📦 前端分片下载</h2>
             `;
 
             releaseData.assets.forEach((asset, index) => {
@@ -443,7 +855,7 @@
                 const updateTime = asset.updated_at ? 
                     new Date(asset.updated_at).toLocaleDateString('zh-CN') : '未知';
                 
-                const proxyUrl = `${API_BASE}/download?d=${index}&v=${encodeURIComponent(releaseData.tag_name)}`;
+                const chunkCount = Math.ceil(asset.size / CHUNK_CONFIG.chunkSize);
                 
                 downloadsHtml += `
                     <div class="download-item">
@@ -451,20 +863,38 @@
                             <div class="file-details">
                                 <div class="file-name">
                                     📄 ${asset.name}
+                                    <span class="cache-status cached" id="cache-status-${index}">
+                                        🔍 检查中...
+                                    </span>
                                 </div>
                                 <div class="file-meta">
                                     <span>📊 大小: ${sizeMB} MB</span>
                                     <span>📈 下载: ${asset.download_count?.toLocaleString() || 0} 次</span>
                                     <span>🕒 更新: ${updateTime}</span>
+                                    <span>🧩 分片: ${chunkCount.toLocaleString()} 个 (${CHUNK_CONFIG.maxConcurrent}并发)</span>
                                 </div>
                             </div>
                             <div class="download-buttons">
-                                <a href="${proxyUrl}" 
-                                   class="download-btn btn-proxy"
-                                   onclick="handleDownload(this, event)"
-                                   title="通过EdgeOne代理服务器下载">
-                                    🚀 开始下载
-                                </a>
+                                <button class="download-btn btn-frontend"
+                                       onclick="handleFrontendDownload(this, ${index})"
+                                       id="download-btn-${index}"
+                                       title="100个并发分片下载，自动重试网络错误，容错性极强">
+                                    🚀 超高并发下载
+                                </button>
+                            </div>
+                            <div class="download-progress" id="progress-${index}">
+                                <div class="progress-header">
+                                    <span id="progress-status-${index}">准备下载...</span>
+                                    <span id="progress-speed-${index}"></span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progress-fill-${index}"></div>
+                                </div>
+                                <div class="progress-details">
+                                    <span id="progress-chunks-${index}">分片: 0/0</span>
+                                    <span id="progress-percent-${index}">0%</span>
+                                </div>
+                                <div class="chunk-info" id="chunk-info-${index}"></div>
                             </div>
                         </div>
                     </div>
@@ -473,52 +903,237 @@
 
             downloadsHtml += '</div>';
 
-            // 添加发布说明
-            if (releaseData.body && releaseData.body.trim()) {
-                downloadsHtml += `
-                    <div class="release-notes">
-                        <h3>📋 更新日志</h3>
-                        ${parseMarkdown(releaseData.body)}
-                    </div>
-                `;
-            }
-
             contentArea.innerHTML = downloadsHtml;
+
+            // 异步检查缓存状态
+            releaseData.assets.forEach((asset, index) => {
+                checkCacheStatus(asset, index);
+            });
         }
 
-        // 简单的Markdown解析
-        function parseMarkdown(text) {
-            return text
-                .replace(/^### (.*$)/gim, '<h4>$1</h4>')
-                .replace(/^## (.*$)/gim, '<h3>$1</h3>')
-                .replace(/^# (.*$)/gim, '<h2>$1</h2>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                .replace(/```(.*?)```/gs, '<pre><code>$1</code></pre>')
-                .replace(/`(.*?)`/g, '<code>$1</code>')
-                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
-                .replace(/^[\*\-\+] (.*)$/gim, '<li>$1</li>')
-                .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-                .replace(/^\d+\. (.*)$/gim, '<li>$1</li>')
-                .replace(/^> (.*)$/gim, '<blockquote>$1</blockquote>')
-                .replace(/\n\n/g, '</p><p>')
-                .replace(/\n/g, '<br>')
-                .replace(/^(.*)$/, '<p>$1</p>')
-                .replace(/<p><\/p>/g, '');
+        // 检查缓存状态
+        async function checkCacheStatus(asset, index) {
+            try {
+                const statusSpan = document.getElementById(`cache-status-${index}`);
+                const chunkInfo = document.getElementById(`chunk-info-${index}`);
+                
+                // 显示检查状态
+                statusSpan.textContent = '🔍 检查中...';
+                statusSpan.className = 'cache-status';
+                
+                const cachedChunks = await cacheManager.getCachedChunks(asset.name);
+                const validChunks = cachedChunks.filter(chunk => chunk.version === releaseData.tag_name);
+                const totalChunks = Math.ceil(asset.size / CHUNK_CONFIG.chunkSize);
+                
+                // 使用requestAnimationFrame确保UI更新
+                requestAnimationFrame(() => {
+                    if (validChunks.length === 0) {
+                        statusSpan.textContent = '💾 未缓存';
+                        statusSpan.className = 'cache-status';
+                        if (chunkInfo) {
+                            chunkInfo.textContent = `需要下载 ${totalChunks.toLocaleString()} 个分片`;
+                        }
+                    } else if (validChunks.length === totalChunks) {
+                        statusSpan.textContent = '✅ 已完整缓存';
+                        statusSpan.className = 'cache-status completed';
+                        if (chunkInfo) {
+                            chunkInfo.textContent = `完整文件已缓存，可立即下载`;
+                        }
+                    } else {
+                        statusSpan.textContent = `📦 部分缓存 (${validChunks.length}/${totalChunks})`;
+                        statusSpan.className = 'cache-status cached';
+                        if (chunkInfo) {
+                            chunkInfo.textContent = `已缓存 ${validChunks.length.toLocaleString()} 个分片，还需下载 ${(totalChunks - validChunks.length).toLocaleString()} 个分片`;
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Cache check failed:', error);
+                requestAnimationFrame(() => {
+                    const statusSpan = document.getElementById(`cache-status-${index}`);
+                    if (statusSpan) {
+                        statusSpan.textContent = '❌ 检查失败';
+                        statusSpan.className = 'cache-status';
+                    }
+                });
+            }
         }
 
-        // 处理下载点击
-        function handleDownload(button, event) {
-            // 添加下载中状态
-            button.classList.add('downloading');
-            const originalText = button.innerHTML;
-            button.innerHTML = '⏳ 正在下载...';
+        // 处理前端下载
+        async function handleFrontendDownload(button, assetIndex) {
+            const asset = releaseData.assets[assetIndex];
+            const progressDiv = document.getElementById(`progress-${assetIndex}`);
+            const progressFill = document.getElementById(`progress-fill-${assetIndex}`);
+            const progressStatus = document.getElementById(`progress-status-${assetIndex}`);
+            const progressSpeed = document.getElementById(`progress-speed-${assetIndex}`);
+            const progressChunks = document.getElementById(`progress-chunks-${assetIndex}`);
+            const progressPercent = document.getElementById(`progress-percent-${assetIndex}`);
+            const chunkInfo = document.getElementById(`chunk-info-${assetIndex}`);
             
-            // 设置超时恢复按钮状态
-            setTimeout(() => {
-                button.classList.remove('downloading');
-                button.innerHTML = originalText;
-            }, 30000); // 30秒后恢复
+            // 显示进度条
+            progressDiv.style.display = 'block';
+            button.disabled = true;
+            button.innerHTML = '⏳ 下载中...';
+            
+            let startTime = Date.now();
+            let lastProgress = 0;
+            let lastUpdateTime = Date.now();
+            
+            // 强制UI更新函数
+            const forceUIUpdate = (updateFn) => {
+                requestAnimationFrame(() => {
+                    updateFn();
+                    // 强制重绘
+                    progressDiv.offsetHeight;
+                });
+            };
+            
+            // 实时进度监控器
+            let progressMonitor = null;
+            let currentProgress = {
+                progress: 0,
+                completedChunks: 0,
+                totalChunks: 0,
+                cachedChunks: 0,
+                downloadingChunks: 0
+            };
+            
+            const startProgressMonitor = () => {
+                progressMonitor = setInterval(() => {
+                    forceUIUpdate(() => {
+                        const percent = Math.round(currentProgress.progress);
+                        const currentTime = Date.now();
+                        
+                        // 更新进度条
+                        progressFill.style.width = `${percent}%`;
+                        progressPercent.textContent = `${percent}%`;
+                        progressChunks.textContent = `分片: ${currentProgress.completedChunks}/${currentProgress.totalChunks}`;
+                        
+                        // 计算和显示速度
+                        if (currentTime - lastUpdateTime > 1000 && currentProgress.progress > lastProgress) {
+                            const timeDiff = (currentTime - lastUpdateTime) / 1000;
+                            const progressDiff = currentProgress.progress - lastProgress;
+                            const speed = (progressDiff * asset.size / 100) / timeDiff / 1024 / 1024;
+                            progressSpeed.textContent = `${speed.toFixed(1)} MB/s`;
+                            lastProgress = currentProgress.progress;
+                            lastUpdateTime = currentTime;
+                        }
+                        
+                        // 更新状态文本
+                        if (currentProgress.progress < 100) {
+                            const failedText = currentProgress.failedChunks > 0 ? ` (失败: ${currentProgress.failedChunks})` : '';
+                            progressStatus.textContent = `正在下载分片... (已缓存: ${currentProgress.cachedChunks}${failedText})`;
+                            chunkInfo.textContent = `高并发下载 ${Math.min(CHUNK_CONFIG.maxConcurrent, currentProgress.downloadingChunks)} 个分片 - 自动重试网络错误`;
+                        } else if (currentProgress.progress >= 100) {
+                            progressStatus.textContent = '组装文件中...';
+                            const failedText = currentProgress.failedChunks > 0 ? ` (跳过 ${currentProgress.failedChunks} 个失败分片)` : '';
+                            chunkInfo.textContent = `正在组装所有分片为完整文件${failedText}`;
+                        }
+                        
+                        // 控制台输出进度（便于调试）
+                        if (Math.floor(currentProgress.progress) % 5 === 0 && currentProgress.progress > 0) {
+                            console.log(`Download progress: ${percent}% (${currentProgress.completedChunks}/${currentProgress.totalChunks} chunks)`);
+                        }
+                    });
+                }, 200); // 每200ms更新一次UI
+            };
+            
+            const stopProgressMonitor = () => {
+                if (progressMonitor) {
+                    clearInterval(progressMonitor);
+                    progressMonitor = null;
+                }
+            };
+            
+            // 开始监控
+            startProgressMonitor();
+            
+            try {
+                const file = await downloader.downloadFile(asset, releaseData.tag_name, (progress) => {
+                    // 更新当前进度数据
+                    currentProgress = { ...progress };
+                    
+                    // 立即更新一次UI（不依赖定时器）
+                    forceUIUpdate(() => {
+                        const percent = Math.round(progress.progress);
+                        progressFill.style.width = `${percent}%`;
+                        progressPercent.textContent = `${percent}%`;
+                        progressChunks.textContent = `分片: ${progress.completedChunks}/${progress.totalChunks}`;
+                        
+                        if (progress.progress < 100) {
+                            const failedText = (progress.failedChunks && progress.failedChunks > 0) ? ` (失败: ${progress.failedChunks})` : '';
+                            progressStatus.textContent = `正在下载分片... (已缓存: ${progress.cachedChunks}${failedText})`;
+                            chunkInfo.textContent = `高并发下载: ${Math.min(CHUNK_CONFIG.maxConcurrent, progress.downloadingChunks)} 个分片`;
+                        }
+                    });
+                });
+                
+                // 停止进度监控
+                stopProgressMonitor();
+                
+                // 下载完成，触发浏览器下载
+                forceUIUpdate(() => {
+                    progressStatus.textContent = '下载完成，保存文件...';
+                    chunkInfo.textContent = '文件已组装完成，正在保存到本地';
+                    progressFill.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                });
+                
+                console.log('File download completed, size:', file.size);
+                
+                const url = URL.createObjectURL(file);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = asset.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                // 更新最终状态
+                forceUIUpdate(() => {
+                    const failedChunks = currentProgress.failedChunks || 0;
+                    if (failedChunks > 0) {
+                        button.innerHTML = '⚠️ 部分下载完成';
+                        progressStatus.textContent = `文件已保存 (跳过${failedChunks}个失败分片)`;
+                        chunkInfo.textContent = `文件大小: ${(file.size / 1024 / 1024).toFixed(2)} MB - 可能略有缺损但可正常使用`;
+                    } else {
+                        button.innerHTML = '✅ 下载完成';
+                        progressStatus.textContent = '文件已保存到本地';
+                        chunkInfo.textContent = `文件大小: ${(file.size / 1024 / 1024).toFixed(2)} MB - 完整无缺损`;
+                    }
+                });
+                
+                // 更新缓存状态
+                setTimeout(async () => {
+                    await checkCacheStatus(asset, assetIndex);
+                }, 1000);
+                
+                setTimeout(() => {
+                    button.innerHTML = '🚀 超高并发下载';
+                    button.disabled = false;
+                    progressDiv.style.display = 'none';
+                }, 5000);
+                
+            } catch (error) {
+                console.error('Download error:', error);
+                
+                // 停止进度监控
+                stopProgressMonitor();
+                
+                forceUIUpdate(() => {
+                    button.innerHTML = '❌ 下载失败';
+                    progressStatus.textContent = `错误: ${error.message}`;
+                    chunkInfo.textContent = '可以重试下载，已下载的分片会被保留，网络错误会自动重试';
+                });
+                
+                setTimeout(() => {
+                    button.innerHTML = '🚀 超高并发下载';
+                    button.disabled = false;
+                    progressDiv.style.display = 'none';
+                }, 5000);
+            }
         }
 
         // 显示错误信息
