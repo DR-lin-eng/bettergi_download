@@ -1,0 +1,45 @@
+{
+  "name": "bettergi-edgeone-downloader",
+  "version": "1.0.0",
+  "description": "BetterGI GitHub Release Downloader for EdgeOne Pages",
+  "main": "functions/api/[[route]].js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler publish",
+    "build": "echo 'No build step required for static files'"
+  },
+  "keywords": [
+    "edgeone",
+    "github",
+    "downloader",
+    "proxy",
+    "cdn"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20230518.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/bettergi-edgeone-downloader.git"
+  },
+  "edgeone": {
+    "compatibility_date": "2024-01-01",
+    "kv_namespaces": [
+      {
+        "binding": "CACHE_KV",
+        "id": "replace-with-your-kv-namespace-id"
+      }
+    ],
+    "vars": {
+      "ENVIRONMENT": "production",
+      "GITHUB_REPO": "babalae/better-genshin-impact",
+      "CACHE_EXPIRE": "3600",
+      "SINGLE_FILE_LIMIT": "1073741824"
+    }
+  }
+}
